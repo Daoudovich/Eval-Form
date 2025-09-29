@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Quiz Form</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --accent: #4cc9f0;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #4bb543;
+            --warning: #f9a826;
+            --danger: #e63946;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .header {
+            background: var(--primary);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .logo h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .admin-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+        
+        .admin-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .form-container {
+            padding: 30px;
+            position: relative;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .progress-container {
+            margin-bottom: 30px;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 5;
+            padding: 10px 0;
+        }
+        
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+        }
+        
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            height: 4px;
+            width: 100%;
+            background: #e0e0e0;
+            z-index: 1;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            height: 4px;
+            width: var(--progress, 0%);
+            background: var(--primary);
+            z-index: 2;
+            transition: width 0.5s;
+        }
+        
+        .progress-step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 4px solid #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #9e9e9e;
+            position: relative;
+            z-index: 3;
+            transition: all 0.3s;
+        }
+        
+        .progress-step.active {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .progress-step.completed {
+            border-color: var(--success);
+            background: var(--success);
+            color: white;
+        }
+        
+        .slides-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .form-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-slide.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .form-slide.prev {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+        
+        .slide-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 10px 20px 10px;
+        }
+        
+        .welcome-message {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .welcome-message h2 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .welcome-message p {
+            color: var(--dark);
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        
+        .question {
+            font-size: 22px;
+            color: var(--dark);
+            margin-bottom: 20px;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .option {
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .option:hover {
+            border-color: var(--accent);
+            background: rgba(76, 201, 240, 0.05);
+        }
+        
+        .option.selected {
+            border-color: var(--primary);
+            background: rgba(67, 97, 238, 0.1);
+        }
+        
+        .option i {
+            color: var(--primary);
+            font-size: 20px;
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: var(--secondary);
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: var(--dark);
+        }
+        
+        .btn-secondary:hover {
+            background: #bdbdbd;
+        }
+        
+        .btn:disabled {
+            background: #e0e0e0;
+            color: #9e9e9e;
+            cursor: not-allowed;
+        }
+        
+        .thank-you {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .thank-you i {
+            font-size: 80px;
+            color: var(--success);
+            margin-bottom: 20px;
+        }
+        
+        .thank-you h2 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 32px;
+        }
+        
+        .thank-you p {
+            color: var(--dark);
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        
+        /* Form Input Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+        
+        .input-with-icon {
+            position: relative;
+        }
+        
+        .input-with-icon i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9e9e9e;
+        }
+        
+        .input-with-icon input {
+            padding-left: 45px;
+        }
+        
+        .user-info-form {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .validation-message {
+            color: var(--danger);
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        /* Admin Panel Styles */
+        .admin-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 10;
+            padding: 30px;
+            transform: translateY(-100%);
+            transition: transform 0.5s;
+            overflow-y: auto;
+        }
+        
+        .admin-panel.active {
+            transform: translateY(0);
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .admin-header h2 {
+            color: var(--primary);
+        }
+        
+        .close-admin {
+            background: var(--danger);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 20px;
+        }
+        
+        .admin-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+        }
+        
+        .admin-section h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .question-editor {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .save-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+            transition: background 0.3s;
+        }
+        
+        .save-btn:hover {
+            background: #3a9c35;
+        }
+        
+        .login-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 15;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .login-panel h2 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .login-panel p {
+            color: var(--dark);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .login-form {
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 10px;
+            }
+            
+            .header {
+                padding: 15px 20px;
+            }
+            
+            .logo h1 {
+                font-size: 20px;
+            }
+            
+            .form-container {
+                padding: 20px;
+            }
+            
+            .form-slide {
+                padding: 0;
+            }
+            
+            .question {
+                font-size: 20px;
+            }
+            
+            .progress-step {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgZmlsbD0iIzQzNjFlZSIvPjx0ZXh0IHg9IjEyOCIgeT0iMTQwIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNDgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNmZmYiPlF1aXo8L3RleHQ+PC9zdmc+" alt="Quiz Logo">
+                <h1>Company Quiz</h1>
+            </div>
+            <button class="admin-btn" id="adminToggle">
+                <i class="fas fa-cog"></i> Admin
+            </button>
+        </div>
+        
+        <div class="form-container">
+            <!-- Progress Bar Container -->
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-step active">1</div>
+                    <div class="progress-step">2</div>
+                    <div class="progress-step">3</div>
+                    <div class="progress-step">4</div>
+                    <div class="progress-step">5</div>
+                    <div class="progress-step">6</div>
+                    <div class="progress-step">7</div>
+                </div>
+            </div>
+            
+            <!-- Slides Container -->
+            <div class="slides-container">
+                <!-- Slide 1: Welcome with User Info -->
+                <div class="form-slide active" id="slide-1">
+                    <div class="slide-content">
+                        <div class="welcome-message">
+                            <h2>Welcome to Our Quiz!</h2>
+                            <p>We're excited to learn more about your preferences. This short quiz will help us understand your needs better and provide you with the best possible experience.</p>
+                            <p>Please provide your information to get started.</p>
+                        </div>
+                        
+                        <div class="user-info-form">
+                            <div class="form-group">
+                                <label for="fullName">Full Name</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-user"></i>
+                                    <input type="text" id="fullName" class="form-control" placeholder="Enter your full name">
+                                </div>
+                                <div class="validation-message" id="nameError">Please enter your full name</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="email">Email Address</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-envelope"></i>
+                                    <input type="email" id="email" class="form-control" placeholder="Enter your email address">
+                                </div>
+                                <div class="validation-message" id="emailError">Please enter a valid email address</div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="mobile">Mobile Number</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-phone"></i>
+                                    <input type="tel" id="mobile" class="form-control" placeholder="Enter your mobile number">
+                                </div>
+                                <div class="validation-message" id="mobileError">Please enter a valid mobile number</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="navigation">
+                        <div></div> <!-- Empty div for spacing -->
+                        <button class="btn btn-primary" id="next-1" disabled>
+                            Next <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Slide 2: Question 1 -->
+                <div class="form-slide" id="slide-2">
+                    <div class="slide-content">
+                        <h2 class="question">What is your primary goal for using our services?</h2>
+                        <div class="options">
+                            <div class="option" data-value="productivity">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Increase productivity</span>
+                            </div>
+                            <div class="option" data-value="cost">
+                                <i class="fas fa-dollar-sign"></i>
+                                <span>Reduce costs</span>
+                            </div>
+                            <div class="option" data-value="growth">
+                                <i class="fas fa-expand"></i>
+                                <span>Business growth</span>
+                            </div>
+                            <div class="option" data-value="quality">
+                                <i class="fas fa-award"></i>
+                                <span>Improve quality</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="navigation">
+                        <button class="btn btn-secondary" id="prev-2">
+                            <i class="fas fa-arrow-left"></i> Previous
+                        </button>
+                        <button class="btn btn-primary" id="next-2" disabled>
+                            Next <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Slide 3: Question 2 -->
+                <div class="form-slide" id="slide-3">
+                    <div class="slide-content">
+                        <h2 class="question">How many employees are in your organization?</h2>
+                        <div class="options">
+                            <div class="option" data-value="1-10">
+                                <i class="fas fa-user"></i>
+                                <span>1-10</span>
+                            </div>
+                            <div class="option" data-value="11-50">
+                                <i class="fas fa-users"></i>
+                                <span>11-50</span>
+                            </div>
+                            <div class="option" data-value="51-200">
+                                <i class="fas fa-building"></i>
+                                <span>51-200</span>
+                            </div>
+                            <div class="option" data-value="201+">
+                                <i class="fas fa-city"></i>
+                                <span>201+</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="navigation">
+                        <button class="btn btn-secondary" id="prev-3">
+                            <i class="fas fa-arrow-left"></i> Previous
+                        </button>
+                        <button class="btn btn-primary" id="next-3" disabled>
+                            Next <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Slide 4: Question 3 -->
+                <div class="form-slide" id="slide-4">
+                    <div class="slide-content">
+                        <h2 class="question">Which department do you work in?</h2>
+                        <div class="options">
+                            <div class="option" data-value="it">
+                                <i class="fas fa-laptop-code"></i>
+                                <span>IT/Technology</span>
+                            </div>
+                            <div class="option" data-value="marketing">
+                                <i class="fas fa-bullhorn"></i>
+                                <span>Marketing</span>
+                            </div>
+                            <div class="option" data-value="sales">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Sales</span>
+                            </div>
+                            <div class="option" data-value="operations">
+                                <i class="fas fa-cogs"></i>
+                                <span>Operations</span>
+                            </div>
+                            <div class="option" data-value="hr">
+                                <i class="fas fa-user-tie"></i>
+                                <span>HR</span>
+                            </div>
+                            <div class="option" data-value="other">
+                                <i class="fas fa-ellipsis-h"></i>
+                                <span>Other</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="navigation">
+                        <button class="btn btn-secondary" id="prev-4">
+                            <i class="fas fa-arrow-left"></i> Previous
+                        </button>
+                        <button class="btn btn-primary" id="next-4" disabled>
+                            Next <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Slide 5: Question 4 -->
+                <div class="form-slide" id="slide-5">
+                    <div class="slide-content">
+                        <h2 class="question">How did you hear about us?</h2>
+                        <div class="options">
+                            <div class="option" data-value="search">
+                                <i class="fas fa-search"></i>
+                                <span>Search engine</span>
+                            </div>
+                            <div class="option" data-value="social">
+                                <i class="fas fa-hashtag"></i>
+                                <span>Social media</span>
+                            </div>
+                            <div class="option" data-value="referral">
+                                <i class="fas fa-user-friends"></i>
+                                <span>Referral</span>
+                            </div>
+                            <div class="option" data-value="ad">
+                                <i class="fas fa-ad"></i>
+                                <span>Advertisement</span>
+                            </div>
+                            <div class="option" data-value="event">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>Event/Conference</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="navigation">
+                        <button class="btn btn-secondary" id="prev-5">
+                            <i class="fas fa-arrow-left"></i> Previous
+                        </button>
+                        <button class="btn btn-primary" id="next-5" disabled>
+                            Next <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Slide 6: Question 5 -->
+                <div class="form-slide" id="slide-6">
+                    <div class="slide-content">
+                        <h2 class="question">What is your biggest challenge right now?</h2>
+                        <div class="options">
+                            <div class="option" data-value="time">
+                                <i class="fas fa-clock"></i>
+                                <span>Lack of time</span>
+                            </div>
+                            <div class="option" data-value="budget">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>Budget constraints</span>
+                            </div>
+                            <div class="option" data-value="resources">
+                                <i class="fas fa-tools"></i>
+                                <span>Limited resources</span>
+                            </div>
+                            <div class="option" data-value="expertise">
+                                <i class="fas fa-graduation-cap"></i>
+                                <span>Lack of expertise</span>
+                            </div>
+                            <div class="option" data-value="competition">
+                                <i class="fas fa-trophy"></i>
+                                <span>Market competition</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="navigation">
+                        <button class="btn btn-secondary" id="prev-6">
+                            <i class="fas fa-arrow-left"></i> Previous
+                        </button>
+                        <button class="btn btn-primary" id="next-6" disabled>
+                            Next <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Slide 7: Question 6 -->
+                <div class="form-slide" id="slide-7">
+                    <div class="slide-content">
+                        <h2 class="question">How likely are you to recommend our services to others?</h2>
+                        <div class="options">
+                            <div class="option" data-value="10">
+                                <i class="fas fa-star"></i>
+                                <span>Extremely likely (10)</span>
+                            </div>
+                            <div class="option" data-value="9">
+                                <i class="fas fa-star"></i>
+                                <span>Very likely (9)</span>
+                            </div>
+                            <div class="option" data-value="8">
+                                <i class="fas fa-star"></i>
+                                <span>Likely (8)</span>
+                            </div>
+                            <div class="option" data-value="7">
+                                <i class="fas fa-star"></i>
+                                <span>Somewhat likely (7)</span>
+                            </div>
+                            <div class="option" data-value="6">
+                                <i class="fas fa-star"></i>
+                                <span>Neutral (6)</span>
+                            </div>
+                            <div class="option" data-value="5">
+                                <i class="fas fa-star"></i>
+                                <span>Not very likely (5 or less)</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="navigation">
+                        <button class="btn btn-secondary" id="prev-7">
+                            <i class="fas fa-arrow-left"></i> Previous
+                        </button>
+                        <button class="btn btn-primary" id="submit-quiz">
+                            Submit <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Slide 8: Thank You -->
+                <div class="form-slide" id="slide-8">
+                    <div class="slide-content">
+                        <div class="thank-you">
+                            <i class="fas fa-check-circle"></i>
+                            <h2>Thank You!</h2>
+                            <p>Your responses have been recorded successfully. We appreciate you taking the time to complete our quiz.</p>
+                            <p>Our team will review your answers and we'll be in touch soon with personalized recommendations.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="navigation">
+                        <div></div> <!-- Empty div for spacing -->
+                        <button class="btn btn-primary" id="restart-quiz">
+                            <i class="fas fa-redo"></i> Start New Quiz
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Admin Panel -->
+        <div class="admin-panel" id="adminPanel">
+            <div class="admin-header">
+                <h2><i class="fas fa-cogs"></i> Admin Panel</h2>
+                <button class="close-admin" id="closeAdmin">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="admin-section">
+                <h3><i class="fas fa-image"></i> Company Logo</h3>
+                <div class="form-group">
+                    <label for="logoUpload">Upload New Logo</label>
+                    <input type="file" id="logoUpload" class="form-control" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label for="logoUrl">Or Enter Logo URL</label>
+                    <input type="text" id="logoUrl" class="form-control" placeholder="https://example.com/logo.png">
+                </div>
+                <button class="btn btn-primary" id="updateLogo">
+                    <i class="fas fa-sync-alt"></i> Update Logo
+                </button>
+            </div>
+            
+            <div class="admin-section">
+                <h3><i class="fas fa-comment-alt"></i> Welcome Message</h3>
+                <div class="form-group">
+                    <label for="welcomeTitle">Welcome Title</label>
+                    <input type="text" id="welcomeTitle" class="form-control" value="Welcome to Our Quiz!">
+                </div>
+                <div class="form-group">
+                    <label for="welcomeMessage">Welcome Message</label>
+                    <textarea id="welcomeMessage" class="form-control" rows="4">We're excited to learn more about your preferences. This short quiz will help us understand your needs better and provide you with the best possible experience.</textarea>
+                </div>
+                <button class="btn btn-primary" id="updateWelcome">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+            
+            <div class="admin-section">
+                <h3><i class="fas fa-question-circle"></i> Questions & Answers</h3>
+                <div id="questionsContainer">
+                    <!-- Questions will be dynamically loaded here -->
+                </div>
+                <button class="save-btn" id="saveQuestions">
+                    <i class="fas fa-save"></i> Save All Questions
+                </button>
+            </div>
+        </div>
+        
+        <!-- Login Panel -->
+        <div class="login-panel hidden" id="loginPanel">
+            <h2>Admin Login</h2>
+            <p>Please enter the admin password to access the settings</p>
+            <div class="login-form">
+                <div class="form-group">
+                    <label for="adminPassword">Password</label>
+                    <input type="password" id="adminPassword" class="form-control" placeholder="Enter admin password">
+                </div>
+                <button class="btn btn-primary" id="loginBtn" style="width: 100%;">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </div>
+            <p id="loginError" style="color: var(--danger); display: none;">Incorrect password. Please try again.</p>
+        </div>
+    </div>
+
+    <script>
+        // Quiz data and state
+        const quizData = {
+            currentSlide: 1,
+            totalSlides: 7,
+            answers: {},
+            userInfo: {},
+            adminPassword: "admin123" // Default admin password
+        };
+
+        // Initialize the quiz
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeQuiz();
+            loadAdminSettings();
+        });
+
+        function initializeQuiz() {
+            // Set up event listeners for navigation
+            for (let i = 1; i <= quizData.totalSlides; i++) {
+                const nextBtn = document.getElementById(`next-${i}`);
+                const prevBtn = document.getElementById(`prev-${i}`);
+                
+                if (nextBtn) {
+                    nextBtn.addEventListener('click', () => navigateToSlide(i + 1));
+                }
+                
+                if (prevBtn) {
+                    prevBtn.addEventListener('click', () => navigateToSlide(i - 1));
+                }
+            }
+            
+            // Set up event listener for submit button
+            document.getElementById('submit-quiz').addEventListener('click', submitQuiz);
+            
+            // Set up event listener for restart button
+            document.getElementById('restart-quiz').addEventListener('click', restartQuiz);
+            
+            // Set up option selection
+            document.querySelectorAll('.option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const slideId = this.closest('.form-slide').id;
+                    const slideNumber = parseInt(slideId.split('-')[1]);
+                    
+                    // Deselect all options in this slide
+                    this.parentElement.querySelectorAll('.option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Select this option
+                    this.classList.add('selected');
+                    
+                    // Store the answer
+                    quizData.answers[`question-${slideNumber}`] = this.getAttribute('data-value');
+                    
+                    // Enable the next button if it's disabled
+                    const nextBtn = document.getElementById(`next-${slideNumber}`);
+                    if (nextBtn && nextBtn.disabled) {
+                        nextBtn.disabled = false;
+                    }
+                });
+            });
+            
+            // Set up user info form validation
+            const userInfoInputs = document.querySelectorAll('#slide-1 input');
+            userInfoInputs.forEach(input => {
+                input.addEventListener('input', validateUserInfo);
+                input.addEventListener('blur', validateUserInfo); // Also validate on blur
+            });
+            
+            // Set up admin panel functionality
+            document.getElementById('adminToggle').addEventListener('click', toggleAdminPanel);
+            document.getElementById('closeAdmin').addEventListener('click', toggleAdminPanel);
+            document.getElementById('updateLogo').addEventListener('click', updateLogo);
+            document.getElementById('updateWelcome').addEventListener('click', updateWelcomeMessage);
+            document.getElementById('saveQuestions').addEventListener('click', saveQuestions);
+            document.getElementById('loginBtn').addEventListener('click', adminLogin);
+            
+            // Initialize question editor
+            initializeQuestionEditor();
+            
+            // Disable next buttons initially
+            for (let i = 1; i <= quizData.totalSlides; i++) {
+                const nextBtn = document.getElementById(`next-${i}`);
+                if (nextBtn) {
+                    nextBtn.disabled = true;
+                }
+            }
+        }
+
+        function validateUserInfo() {
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const mobile = document.getElementById('mobile').value.trim();
+            
+            // Get validation message elements
+            const nameError = document.getElementById('nameError');
+            const emailError = document.getElementById('emailError');
+            const mobileError = document.getElementById('mobileError');
+            
+            // Reset error messages
+            nameError.style.display = 'none';
+            emailError.style.display = 'none';
+            mobileError.style.display = 'none';
+            
+            // Simple validation
+            const isNameValid = fullName.length >= 2; // At least 2 characters
+            const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            const isMobileValid = /^[\+]?[0-9\s\-\(\)]{8,}$/.test(mobile.replace(/\s/g, ''));
+            
+            // Show error messages if needed
+            if (!isNameValid && fullName.length > 0) {
+                nameError.textContent = 'Name must be at least 2 characters';
+                nameError.style.display = 'block';
+            } else if (!isNameValid) {
+                nameError.textContent = 'Please enter your full name';
+                nameError.style.display = 'block';
+            }
+            
+            if (!isEmailValid && email.length > 0) {
+                emailError.textContent = 'Please enter a valid email address';
+                emailError.style.display = 'block';
+            } else if (!isEmailValid) {
+                emailError.textContent = 'Please enter your email address';
+                emailError.style.display = 'block';
+            }
+            
+            if (!isMobileValid && mobile.length > 0) {
+                mobileError.textContent = 'Please enter a valid mobile number';
+                mobileError.style.display = 'block';
+            } else if (!isMobileValid) {
+                mobileError.textContent = 'Please enter your mobile number';
+                mobileError.style.display = 'block';
+            }
+            
+            // Enable/disable next button based on validation
+            const nextBtn = document.getElementById('next-1');
+            if (isNameValid && isEmailValid && isMobileValid) {
+                nextBtn.disabled = false;
+                
+                // Store user info
+                quizData.userInfo = {
+                    fullName,
+                    email,
+                    mobile
+                };
+            } else {
+                nextBtn.disabled = true;
+            }
+        }
+
+        function navigateToSlide(slideNumber) {
+            if (slideNumber < 1 || slideNumber > quizData.totalSlides + 1) return;
+            
+            const currentSlide = document.getElementById(`slide-${quizData.currentSlide}`);
+            const nextSlide = document.getElementById(`slide-${slideNumber}`);
+            
+            // Update progress bar
+            updateProgressBar(slideNumber);
+            
+            // Animation: slide out current, slide in next
+            currentSlide.classList.remove('active');
+            currentSlide.classList.add('prev');
+            
+            setTimeout(() => {
+                nextSlide.classList.remove('prev');
+                nextSlide.classList.add('active');
+                quizData.currentSlide = slideNumber;
+            }, 300);
+        }
+
+        function updateProgressBar(slideNumber) {
+            const progressSteps = document.querySelectorAll('.progress-step');
+            
+            // Calculate progress percentage
+            const progressPercent = ((slideNumber - 1) / quizData.totalSlides) * 100;
+            document.documentElement.style.setProperty('--progress', `${progressPercent}%`);
+            
+            // Update step indicators
+            progressSteps.forEach((step, index) => {
+                step.classList.remove('active', 'completed');
+                
+                if (index < slideNumber - 1) {
+                    step.classList.add('completed');
+                } else if (index === slideNumber - 1) {
+                    step.classList.add('active');
+                }
+            });
+        }
+
+        function submitQuiz() {
+            // Combine user info and answers
+            const submissionData = {
+                ...quizData.userInfo,
+                ...quizData.answers,
+                timestamp: new Date().toISOString()
+            };
+            
+            console.log('Quiz submission:', submissionData);
+            
+            // In a real implementation, this would send data to Google Sheets
+            submitToGoogleSheets(submissionData);
+            
+            // Navigate to thank you slide
+            navigateToSlide(8);
+        }
+
+        function submitToGoogleSheets(data) {
+            // Replace this URL with your Google Apps Script Web App URL
+            const scriptURL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+            
+            fetch(scriptURL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                console.log('Successfully submitted to Google Sheets:', result);
+                showNotification('Responses saved successfully!', 'success');
+            })
+            .catch(error => {
+                console.error('Error submitting to Google Sheets:', error);
+                showNotification('Failed to save responses. Please try again.', 'error');
+                // Fallback: store in localStorage
+                localStorage.setItem('quizBackup_' + Date.now(), JSON.stringify(data));
+            });
+        }
+
+        function showNotification(message, type) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 5px;
+                color: white;
+                font-weight: bold;
+                z-index: 1000;
+                background-color: ${type === 'success' ? '#4bb543' : '#e63946'};
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function restartQuiz() {
+            // Reset quiz data
+            quizData.currentSlide = 1;
+            quizData.answers = {};
+            quizData.userInfo = {};
+            
+            // Reset UI
+            document.querySelectorAll('.option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            document.querySelectorAll('.form-slide').forEach(slide => {
+                slide.classList.remove('active', 'prev');
+            });
+            
+            document.getElementById('slide-1').classList.add('active');
+            
+            // Clear user info form
+            document.getElementById('fullName').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('mobile').value = '';
+            
+            // Hide validation messages
+            document.querySelectorAll('.validation-message').forEach(msg => {
+                msg.style.display = 'none';
+            });
+            
+            updateProgressBar(1);
+            
+            // Disable next buttons
+            for (let i = 1; i <= quizData.totalSlides; i++) {
+                const nextBtn = document.getElementById(`next-${i}`);
+                if (nextBtn) {
+                    nextBtn.disabled = true;
+                }
+            }
+        }
+
+        function toggleAdminPanel() {
+            const adminPanel = document.getElementById('adminPanel');
+            const loginPanel = document.getElementById('loginPanel');
+            
+            if (adminPanel.classList.contains('active')) {
+                adminPanel.classList.remove('active');
+            } else {
+                // Check if user is already logged in
+                const isLoggedIn = sessionStorage.getItem('quizAdminSession') !== null;
+                
+                if (isLoggedIn) {
+                    adminPanel.classList.add('active');
+                } else {
+                    loginPanel.classList.remove('hidden');
+                }
+            }
+        }
+
+        function adminLogin() {
+            const password = document.getElementById('adminPassword').value;
+            const errorMsg = document.getElementById('loginError');
+            
+            if (password === quizData.adminPassword) {
+                // Create session
+                sessionStorage.setItem('quizAdminSession', btoa(Date.now().toString()));
+                document.getElementById('loginPanel').classList.add('hidden');
+                document.getElementById('adminPanel').classList.add('active');
+                errorMsg.style.display = 'none';
+            } else {
+                errorMsg.style.display = 'block';
+                document.getElementById('adminPassword').value = '';
+            }
+        }
+
+        function updateLogo() {
+            const logoUrl = document.getElementById('logoUrl').value;
+            const logoFile = document.getElementById('logoUpload').files[0];
+            
+            if (logoFile) {
+                // In a real implementation, you would upload the file to a server
+                // For this demo, we'll create a local URL
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.querySelector('.logo img').src = e.target.result;
+                    localStorage.setItem('quizLogo', e.target.result);
+                };
+                reader.readAsDataURL(logoFile);
+            } else if (logoUrl) {
+                document.querySelector('.logo img').src = logoUrl;
+                localStorage.setItem('quizLogo', logoUrl);
+            }
+        }
+
+        function updateWelcomeMessage() {
+            const welcomeTitle = document.getElementById('welcomeTitle').value;
+            const welcomeMessage = document.getElementById('welcomeMessage').value;
+            
+            document.querySelector('.welcome-message h2').textContent = welcomeTitle;
+            document.querySelector('.welcome-message p').textContent = welcomeMessage;
+            
+            // Save to localStorage
+            localStorage.setItem('quizWelcomeTitle', welcomeTitle);
+            localStorage.setItem('quizWelcomeMessage', welcomeMessage);
+        }
+
+        function loadAdminSettings() {
+            // Load logo
+            const savedLogo = localStorage.getItem('quizLogo');
+            if (savedLogo) {
+                document.querySelector('.logo img').src = savedLogo;
+                document.getElementById('logoUrl').value = savedLogo;
+            }
+            
+            // Load welcome message
+            const savedTitle = localStorage.getItem('quizWelcomeTitle');
+            const savedMessage = localStorage.getItem('quizWelcomeMessage');
+            
+            if (savedTitle) {
+                document.querySelector('.welcome-message h2').textContent = savedTitle;
+                document.getElementById('welcomeTitle').value = savedTitle;
+            }
+            
+            if (savedMessage) {
+                document.querySelector('.welcome-message p').textContent = savedMessage;
+                document.getElementById('welcomeMessage').value = savedMessage;
+            }
+        }
+
+        function initializeQuestionEditor() {
+            const questionsContainer = document.getElementById('questionsContainer');
+            
+            // Load existing questions or use defaults
+            const savedQuestions = JSON.parse(localStorage.getItem('quizQuestions')) || getDefaultQuestions();
+            
+            savedQuestions.forEach((question, index) => {
+                const questionElement = createQuestionEditor(question, index);
+                questionsContainer.appendChild(questionElement);
+            });
+        }
+
+        function createQuestionEditor(question, index) {
+            const div = document.createElement('div');
+            div.className = 'question-editor';
+            div.innerHTML = `
+                <div class="form-group">
+                    <label>Question ${index + 1}</label>
+                    <input type="text" class="form-control question-text" value="${question.text}" placeholder="Enter question text">
+                </div>
+                <div class="form-group">
+                    <label>Options (one per line)</label>
+                    <textarea class="form-control question-options" placeholder="Enter options, one per line">${question.options.join('\n')}</textarea>
+                </div>
+                <button class="btn btn-secondary remove-question" ${index === 0 ? 'disabled' : ''}>
+                    <i class="fas fa-trash"></i> Remove Question
+                </button>
+                <hr>
+            `;
+            
+            // Add remove functionality
+            const removeBtn = div.querySelector('.remove-question');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', () => {
+                    div.remove();
+                });
+            }
+            
+            return div;
+        }
+
+        function getDefaultQuestions() {
+            return [
+                {
+                    text: "What is your primary goal for using our services?",
+                    options: ["Increase productivity", "Reduce costs", "Business growth", "Improve quality"]
+                },
+                {
+                    text: "How many employees are in your organization?",
+                    options: ["1-10", "11-50", "51-200", "201+"]
+                },
+                {
+                    text: "Which department do you work in?",
+                    options: ["IT/Technology", "Marketing", "Sales", "Operations", "HR", "Other"]
+                },
+                {
+                    text: "How did you hear about us?",
+                    options: ["Search engine", "Social media", "Referral", "Advertisement", "Event/Conference"]
+                },
+                {
+                    text: "What is your biggest challenge right now?",
+                    options: ["Lack of time", "Budget constraints", "Limited resources", "Lack of expertise", "Market competition"]
+                },
+                {
+                    text: "How likely are you to recommend our services to others?",
+                    options: ["Extremely likely (10)", "Very likely (9)", "Likely (8)", "Somewhat likely (7)", "Neutral (6)", "Not very likely (5 or less)"]
+                }
+            ];
+        }
+
+        function saveQuestions() {
+            const questionEditors = document.querySelectorAll('.question-editor');
+            const questions = [];
+            
+            questionEditors.forEach((editor, index) => {
+                const text = editor.querySelector('.question-text').value;
+                const optionsText = editor.querySelector('.question-options').value;
+                const options = optionsText.split('\n').filter(opt => opt.trim() !== '');
+                
+                questions.push({
+                    text: text,
+                    options: options
+                });
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('quizQuestions', JSON.stringify(questions));
+            
+            // In a real implementation, you would save to a backend
+            showNotification('Questions saved successfully!', 'success');
+        }
+    </script>
+</body>
+</html>
